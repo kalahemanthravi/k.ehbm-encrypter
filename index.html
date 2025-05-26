@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Security System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #222327;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            
+        }
+
+        .container {
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        input, textarea {
+            padding: 12px 20px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            outline: none;
+            color: black;
+        }
+        
+        textarea {
+            max-width: 400px;
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .countdown {
+            font-size: 48px;
+            margin: 20px;
+        }
+        
+        .error {
+            color: #ff4444;
+            margin-top: 10px;
+        }
+
+        /* Encryption/Decryption Styles */
+        .crypto-container {
+            margin-top: 30px;
+    background-color: black;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 400px;
+    max-height: calc(100vh - 150px); /* Limit height to viewport minus header and padding */
+    overflow-y: auto; /* Add scrolling if content overflows */
+}
+
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 10px;
+        }
+
+        .tab {
+            background-color: #333;
+            padding: 10px;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            border-radius: 5px;
+            margin: 0 5px;
+            transition: background-color 0.3s;
+        }
+
+        .tab:hover {
+            background-color: #555;
+        }
+
+        .tab.active {
+            background-color: #4CAF50;
+        }
+
+        .crypto-input, .crypto-output {
+            width: 100%;
+            max-width: 360px;
+            margin: 10px auto;
+        }
+
+        .crypto-btn {
+            background-color: purple;
+            color: aqua;
+            padding: 10px 20px;
+            margin: 5px;
+        }
+
+        .crypto-btn:hover {
+            background-color: #6a0dad;
+        }
+
+        .copy-btn {
+            background-color: blueviolet;
+            padding: 10px 20px;
+            margin: 5px;
+        }
+
+        .copy-btn:hover {
+            background-color: #7a3cb8;
+        }
+
+        /* k.ehbm heading linear gradient */
+        .k.ehbm {
+            position: absolute;
+            text-transform: uppercase;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(
+                to right,
+                #fc72ff, /* Pink */
+                #8f68ff, /* Purple */
+                #487bff, /* Blue */
+                #fc72ff,  /* Pink */
+                #00d1ff, /* Cyan */
+                #8f68ff, /* Purple */
+                #fc72ff  /* Pink */
+            );
+            background-size: 400%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: animate-gradient 20s linear infinite;
+            outline: none;
+            border: none;
+        }
+
+        @keyframes animate-gradient {
+            0% {
+                background-position: 0%;
+            }
+            100% {
+                background-position: 400%;
+            }
+        }
+
+        .kehbmcontainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
+    position: fixed; /* Changed from implicit position to fixed */
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    height: 75px;
+    background-color: rgb(63, 253, 63);
+    border-radius: 40px;
+    box-shadow: 0 0 150px #1d8aff;
+    border-style: solid;
+    border-color: #5ba8fc;
+    border-width: 1px;
+    z-index: 1000; /* Ensure it stays above other content */
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="kehbmcontainer">
+            <h1 class="k ehbm">K.EHBM Security System</h1>
+        </div>
+        <br><br><br><br>
+        <!-- Initial Screen -->
+        <div id="initial-screen">
+            <p style="text-align: center;">Click continue to initialize the security verification for K.EHBM</p>
+            <button id="continue-btn">Continue</button>
+        </div>
+
+        <!-- Password Screen -->
+        <div id="password-screen" class="hidden">
+            <p>Please enter the password:</p>
+            <input type="password" id="password-input" class="password" placeholder="Enter password">
+            <div class="show-password">
+                <input type="checkbox" id="show-password">
+                <label for="show-password">Show Password</label>
+            </div>
+            <div id="password-error" class="error hidden"></div>
+            <button id="submit-password">Submit</button>
+        </div>
+        
+        <!-- Question 1 Screen -->
+        <div id="question1-screen" class="hidden">
+            <p id="question1-text"></p>
+            <input type="text" id="answer1-input" placeholder="Your answer">
+            <div id="question1-error" class="error hidden"></div>
+            
+            <button id="submit-answer1">Submit</button>
+        </div>
+        
+        <!-- Question 2 Screen -->
+        <div id="question2-screen" class="hidden">
+            <p id="question2-text"></p>
+            <input type="text" id="answer2-input" placeholder="Your answer">
+            <div id="question2-error" class="error hidden"></div>
+            <h4>note: just enter options like if the option is b then you have to enter just "b" letter in the text box</h4>
+            <button id="submit-answer2">Submit</button>
+        </div>
+        
+        <!-- Question 3 Screen -->
+        <div id="question3-screen" class="hidden">
+            <p id="question3-text"></p>
+            <input type="text" id="answer3-input" placeholder="Your answer">
+            <div id="question3-error" class="error hidden"></div>
+            <button id="submit-answer3">Submit</button>
+        </div>
+        
+        <!-- Access Screen -->
+        <div id="access-screen" class="hidden">
+            <h2 id="access-message"></h2>
+            <div id="countdown" class="countdown">5</div>
+        </div>
+        
+        <!-- Encryption/Decryption Tool -->
+        <div id="crypto-tool" class="crypto-container hidden">
+            <h4>if you want to decrypt a message then press "Decrypt-tab" button and paste your encrypted message in first box after you have to enter pin in second box after that press decrypt button the secret message will appear.</h4>
+
+            <h4>if you want to encrypt a message then press encrypt-tab button and type you message in the first box after that type your own pin in second box after that press encrypt button.the encrypted message will appear in the third box. you can copy the encrypted message by pressing copy button and share the message.</h4>
+            <h3>Note: Make sure to share the pin also if you does't share the pin the another person cannot see the message.</h3>
+
+            <h1>Secure Crypto Tool</h1>
+            <div class="tabs">
+                <div class="tab active" data-tab="encrypt">Encrypt-tab</div>
+                <div class="tab" data-tab="decrypt">Decrypt-tab</div>
+            </div>
+            <div id="encrypt-tab" class="tab-content">
+                <textarea id="encrypt-input" class="crypto-input" placeholder="Enter text to encrypt"></textarea>
+                <input type="password" id="encrypt-key" class="crypto-input" placeholder="Enter encryption key">
+                <button id="encrypt-btn" class="crypto-btn">Encrypt</button>
+                <textarea id="encrypt-output" class="crypto-output" placeholder="Encrypted text" readonly></textarea>
+                <button id="copy-encrypt" class="copy-btn">Copy</button>
+                <div id="encrypt-error" class="error hidden"></div>
+            </div>
+            <div id="decrypt-tab" class="tab-content hidden">
+                <textarea id="decrypt-input" class="crypto-input" placeholder="Enter text to decrypt"></textarea>
+                <input type="password" id="decrypt-key" class="crypto-input" placeholder="Enter decryption key">
+                <button id="decrypt-btn" class="crypto-btn">Decrypt</button>
+                <textarea id="decrypt-output" class="crypto-output" placeholder="Decrypted text" readonly></textarea>
+                <button id="copy-decrypt" class="copy-btn">Copy</button>
+                <div id="decrypt-error" class="error hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // User Database
+        const users = [
+            {
+                password: "iam hemanth",
+                name: "Hemanthravi",
+                gender: "male",
+                securityQuestions: [
+                    "what is the hidden name behind 'b' letter in K.EHBM",
+                    "what is best number ever?"
+                ],
+                securityAnswers: ["I", "2851113"]
+            },
+            {
+                password: "iam bhargavi",
+                name: "Bhargavi",
+                gender: "female",
+                securityQuestions: [
+                    "what is the first gift given to hemanth for his birthday by you?",
+                    "which member did hemanth talk for the first time in your family.? a)Auntygaru b)Bhargavi c)Meghana"
+                ],
+                securityAnswers: ["Pen", "a"]
+            }
+        ];
+
+        let currentUser = null;
+
+        // DOM Elements
+        const initialScreen = document.getElementById('initial-screen');
+        const continueBtn = document.getElementById('continue-btn');
+        const passwordScreen = document.getElementById('password-screen');
+        const passwordInput = document.getElementById('password-input');
+        const passwordError = document.getElementById('password-error');
+        const submitPassword = document.getElementById('submit-password');
+        
+        const question1Screen = document.getElementById('question1-screen');
+        const question1Text = document.getElementById('question1-text');
+        const answer1Input = document.getElementById('answer1-input');
+        const question1Error = document.getElementById('question1-error');
+        const submitAnswer1 = document.getElementById('submit-answer1');
+        
+        const question2Screen = document.getElementById('question2-screen');
+        const question2Text = document.getElementById('question2-text');
+        const answer2Input = document.getElementById('answer2-input');
+        const question2Error = document.getElementById('question2-error');
+        const submitAnswer2 = document.getElementById('submit-answer2');
+        
+        const question3Screen = document.getElementById('question3-screen');
+        const question3Text = document.getElementById('question3-text');
+        const answer3Input = document.getElementById('answer3-input');
+        const question3Error = document.getElementById('question3-error');
+        const submitAnswer3 = document.getElementById('submit-answer3');
+        
+        const accessScreen = document.getElementById('access-screen');
+        const accessMessage = document.getElementById('access-message');
+        const countdown = document.getElementById('countdown');
+        
+        const cryptoTool = document.getElementById('crypto-tool');
+        const encryptTab = document.getElementById('encrypt-tab');
+        const decryptTab = document.getElementById('decrypt-tab');
+        const encryptInput = document.getElementById('encrypt-input');
+        const encryptKey = document.getElementById('encrypt-key');
+        const encryptBtn = document.getElementById('encrypt-btn');
+        const encryptOutput = document.getElementById('encrypt-output');
+        const copyEncrypt = document.getElementById('copy-encrypt');
+        const encryptError = document.getElementById('encrypt-error');
+        const decryptInput = document.getElementById('decrypt-input');
+        const decryptKey = document.getElementById('decrypt-key');
+        const decryptBtn = document.getElementById('decrypt-btn');
+        const decryptOutput = document.getElementById('decrypt-output');
+        const copyDecrypt = document.getElementById('copy-decrypt');
+        const decryptError = document.getElementById('decrypt-error');
+
+        // Voice Configuration
+        const synth = window.speechSynthesis;
+        let femaleVoice;
+
+        function loadVoices() {
+            const voices = synth.getVoices();
+            femaleVoice = voices.find(voice => 
+                voice.name.includes('Female') || 
+                voice.name.includes('Woman') || 
+                voice.name.includes('Alice') || 
+                voice.name.includes('Zira')
+            );
+            if (!femaleVoice && voices.length > 0) {
+                femaleVoice = voices[0];
+            }
+        }
+
+        loadVoices();
+        synth.onvoiceschanged = loadVoices;
+
+        function speak(text) {
+            if (synth.speaking) synth.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1.2;
+            if (femaleVoice) utterance.voice = femaleVoice;
+            synth.speak(utterance);
+        }
+
+        // Security System
+        continueBtn.addEventListener('click', () => {
+            initialScreen.classList.add('hidden');
+            passwordScreen.classList.remove('hidden');
+            speak("Initializing K EHBM Security System. Please enter the password");
+            passwordInput.focus();
+        });
+
+        submitPassword.addEventListener('click', () => {
+            const enteredPassword = passwordInput.value.trim().toLowerCase();
+            currentUser = users.find(user => 
+                user.password.toLowerCase() === enteredPassword
+            );
+
+            if (currentUser) {
+                passwordScreen.classList.add('hidden');
+                question1Screen.classList.remove('hidden');
+                question1Text.textContent = currentUser.securityQuestions[0];
+                speak(currentUser.securityQuestions[0]);
+                passwordError.classList.add('hidden');
+                answer1Input.focus();
+            } else {
+                passwordError.textContent = "Incorrect password. Access denied, only K.EHBM members can access this system";
+                passwordError.classList.remove('hidden');
+                speak("Incorrect password. Access denied, only K EHBM members can access this system");
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        });
+
+        submitAnswer1.addEventListener('click', () => {
+            const answer = answer1Input.value.trim().toLowerCase();
+            if (answer === currentUser.securityAnswers[0].toLowerCase()) {
+                question1Screen.classList.add('hidden');
+                question2Screen.classList.remove('hidden');
+                question2Text.textContent = currentUser.securityQuestions[1];
+                speak(currentUser.securityQuestions[1]);
+                question1Error.classList.add('hidden');
+                answer2Input.focus();
+            } else {
+                question1Error.textContent = "Incorrect answer. Access denied, only K.EHBM members can access this system";
+                question1Error.classList.remove('hidden');
+                speak("Incorrect answer. Access denied, only K EHBM members can access this system.");
+                answer1Input.value = '';
+                answer1Input.focus();
+            }
+        });
+
+        submitAnswer2.addEventListener('click', () => {
+            const answer = answer2Input.value.trim().toLowerCase();
+            if (answer === currentUser.securityAnswers[1].toLowerCase()) {
+                question2Screen.classList.add('hidden');
+                if (currentUser.securityQuestions.length > 2) {
+                    question3Screen.classList.remove('hidden');
+                    question3Text.textContent = currentUser.securityQuestions[2];
+                    speak(currentUser.securityQuestions[2]);
+                    question2Error.classList.add('hidden');
+                    answer3Input.focus();
+                } else {
+                    accessScreen.classList.remove('hidden');
+                    const title = currentUser.gender === 'male' ? 'Mister' : 'Madam';
+                    const welcomeMessage = `Access granted. Welcome to K.EHBM secret page ${title} ${currentUser.name}`;
+                    accessMessage.textContent = welcomeMessage;
+                    speak(welcomeMessage);
+                    let counter = 5;
+                    countdown.textContent = counter;
+                    const countdownInterval = setInterval(() => {
+                        counter--;
+                        countdown.textContent = counter;
+                        if (counter <= 0) {
+                            clearInterval(countdownInterval);
+                            accessScreen.classList.add('hidden');
+                            showCryptoTool();
+                        }
+                    }, 1000);
+                }
+            } else {
+                question2Error.textContent = "Incorrect answer. Access denied, only K.EHBM members can access this system";
+                question2Error.classList.remove('hidden');
+                speak("Incorrect answer. Access denied, only K EHBM members can access this system.");
+                answer2Input.value = '';
+                answer2Input.focus();
+            }
+        });
+
+        submitAnswer3.addEventListener('click', () => {
+            const answer = answer3Input.value.trim().toLowerCase();
+            if (answer === currentUser.securityAnswers[2].toLowerCase()) {
+                question3Screen.classList.add('hidden');
+                accessScreen.classList.remove('hidden');
+                const title = currentUser.gender === 'male' ? 'Mister' : 'Madam';
+                const welcomeMessage = `Access granted. Welcome ${title} ${currentUser.name}`;
+                accessMessage.textContent = welcomeMessage;
+                speak(welcomeMessage);
+                let counter = 5;
+                countdown.textContent = counter;
+                const countdownInterval = setInterval(() => {
+                    counter--;
+                    countdown.textContent = counter;
+                    if (counter <= 0) {
+                        clearInterval(countdownInterval);
+                        accessScreen.classList.add('hidden');
+                        showCryptoTool();
+                    }
+                }, 1000);
+            } else {
+                question3Error.textContent = "Incorrect answer. Access denied, only K.EHBM members can access this system";
+                question3Error.classList.remove('hidden');
+                speak("Incorrect answer. Access denied, only K EHBM members can access this system.");
+                answer3Input.value = '';
+                answer3Input.focus();
+            }
+        });
+
+        // Encryption/Decryption Functions
+        function showCryptoTool() {
+            cryptoTool.classList.remove('hidden');
+            speak("Secure Crypto Tool activated. Use the tabs to encrypt or decrypt your messages.");
+        }
+
+        // Tab Switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById(`${tab.getAttribute('data-tab')}-tab`).classList.remove('hidden');
+                speak(`${tab.getAttribute('data-tab')} tab selected.`);
+            });
+        });
+
+        // Encryption
+        encryptBtn.addEventListener('click', () => {
+            const text = encryptInput.value.trim();
+            const key = encryptKey.value.trim();
+            encryptError.classList.add('hidden');
+
+            if (!text || !key) {
+                encryptError.textContent = "Please enter both text and key.";
+                encryptError.classList.remove('hidden');
+                speak("Please enter both text and key.");
+                return;
+            }
+
+            try {
+                const encrypted = CryptoJS.AES.encrypt(text, key).toString();
+                encryptOutput.value = encrypted;
+                speak("Text encrypted successfully.");
+            } catch (error) {
+                encryptError.textContent = "Encryption failed. Please try again.";
+                encryptError.classList.remove('hidden');
+                speak("Encryption failed. Please try again.");
+            }
+        });
+
+        // Decryption
+        decryptBtn.addEventListener('click', () => {
+            const text = decryptInput.value.trim();
+            const key = decryptKey.value.trim();
+            decryptError.classList.add('hidden');
+
+            if (!text || !key) {
+                decryptError.textContent = "Please enter both text and key.";
+                decryptError.classList.remove('hidden');
+                speak("Please enter both text and key.");
+                return;
+            }
+
+            try {
+                const decrypted = CryptoJS.AES.decrypt(text, key).toString(CryptoJS.enc.Utf8);
+                if (!decrypted) {
+                    throw new Error("Decryption failed.");
+                }
+                decryptOutput.value = decrypted;
+                speak("Text decrypted successfully.");
+            } catch (error) {
+                decryptError.textContent = "Decryption failed. Check your text or key.";
+                decryptError.classList.remove('hidden');
+                speak("Decryption failed. Check your text or key.");
+            }
+        });
+
+        // Copy Buttons
+        copyEncrypt.addEventListener('click', () => {
+            if (encryptOutput.value) {
+                navigator.clipboard.writeText(encryptOutput.value);
+                speak("Encrypted text copied to clipboard.");
+            }
+        });
+
+        copyDecrypt.addEventListener('click', () => {
+            if (decryptOutput.value) {
+                navigator.clipboard.writeText(decryptOutput.value);
+                speak("Decrypted text copied to clipboard.");
+            }
+        });
+
+        // Security Measures
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','U'].includes(e.key.toUpperCase()))) {
+                e.preventDefault();
+            }
+        });
+
+        const showPasswordCheckbox = document.getElementById('show-password');
+        const passwordInputField = document.getElementById('password-input');
+
+        showPasswordCheckbox.addEventListener('change', function() {
+            passwordInputField.type = this.checked ? 'text' : 'password';
+        });
+
+        // Enhanced Enter key handling for all screens
+        function handleEnterKey(event, callback) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                callback();
+            }
+        }
+
+        // Password screen
+        passwordInput.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => submitPassword.click());
+        });
+
+        // Question 1 screen
+        answer1Input.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => submitAnswer1.click());
+        });
+
+        // Question 2 screen
+        answer2Input.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => submitAnswer2.click());
+        });
+
+        // Question 3 screen
+        answer3Input.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => submitAnswer3.click());
+        });
+
+        // Crypto tool Enter key handling
+        encryptInput.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => encryptBtn.click());
+        });
+
+        encryptKey.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => encryptBtn.click());
+        });
+
+        decryptInput.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => decryptBtn.click());
+        });
+
+        decryptKey.addEventListener('keypress', (e) => {
+            handleEnterKey(e, () => decryptBtn.click());
+        });
+    </script>
+</body>
+</html>
